@@ -1501,8 +1501,7 @@ Type::is_promotable(const Type* t) const
 
 // ---------------------------------------------------------------------
 /* generally integer types can be converted to any other interger types
- * void / struct / union / array types are not. Pointers depend on the
- * type they point to. (unsigned int*) is convertable to (int*), etc
+ * void / struct / union / array types are not.
  *************************************************************/
 bool
 Type::is_convertable(const Type* t) const
@@ -1522,19 +1521,8 @@ Type::is_convertable(const Type* t) const
 		return true;
 	}
 	if (ptr_type->eType == eSimple && t->ptr_type->eType == eSimple) {
-		if (ptr_type->simple_type == t->ptr_type->simple_type)
-			return true;
-		else if (CGOptions::strict_float() &&
-			((ptr_type->simple_type == eFloat && t->ptr_type->simple_type != eFloat) ||
-                	 (ptr_type->simple_type != eFloat && t->ptr_type->simple_type == eFloat)))
-		    return false;
-		else if (CGOptions::lang_cpp())
-			return false;	// or we need an explicit cast here
-		else
-		    return ptr_type->SizeInBytes() == t->ptr_type->SizeInBytes();
+		return ptr_type->simple_type == t->ptr_type->simple_type;
 	}
-        //return ptr_type->is_convertable(t->ptr_type);
-	//return t->ptr_type->is_promotable(ptr_type);
     }
     return false;
 }
