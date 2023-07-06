@@ -1219,6 +1219,7 @@ VariableSelector::select(Effect::Access access,
 	}
 	ERROR_GUARD(NULL);
 	if (var && !cg_context.get_effect_context().is_side_effect_free()) {
+		// This assertion fires all the time, but why is it even necessary?
 		assert(!var->is_volatile());
 	}
 	// record statistics

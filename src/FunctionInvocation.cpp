@@ -296,6 +296,8 @@ FunctionInvocation::make_random_binary_ptr_comparison(CGContext &cg_context)
 	CGContext lhs_cg_context(cg_context, cg_context.get_effect_context(), &lhs_eff_accum);
 	lhs_cg_context.flags |= NO_DANGLING_PTR;
 	Expression *lhs = Expression::make_random(lhs_cg_context, type, 0, true);
+	CVQualifiers qfer = lhs->get_qualifiers();
+
 	ERROR_GUARD_AND_DEL1(NULL, fi);
 	cg_context.merge_param_context(lhs_cg_context, true);
 
@@ -307,6 +309,9 @@ FunctionInvocation::make_random_binary_ptr_comparison(CGContext &cg_context)
 	}
 	Expression *rhs = 0;
 
+	bool prev_flag = CGOptions::match_exact_qualifiers(); // keep a copy of previous flag
+	CGOptions::match_exact_qualifiers(true);      // force exact qualifier match when selecting expressions
+
 	// If we are guaranteed that the LHS will be evaluated before the RHS,
 	// or if the LHS is pure (not merely side-effect-free),
 	// then we can generate the RHS under the original effect context.
@@ -315,7 +320,7 @@ FunctionInvocation::make_random_binary_ptr_comparison(CGContext &cg_context)
 		// need to pass in NO_DANGLING_PTR flag
 		unsigned int old_flag = cg_context.flags;
 		cg_context.flags |= NO_DANGLING_PTR;
-		rhs = Expression::make_random(cg_context, type, 0, true, false, tt);
+		rhs = Expression::make_random(cg_context, type, &qfer, true, false, tt);
 		cg_context.flags = old_flag;
 	} else {
 		// Otherwise, the RHS must be generated under the combined effect
@@ -326,10 +331,12 @@ FunctionInvocation::make_random_binary_ptr_comparison(CGContext &cg_context)
 
 		CGContext rhs_cg_context(cg_context, rhs_eff_context, &rhs_eff_accum);
 		rhs_cg_context.flags |= NO_DANGLING_PTR;
-		rhs = Expression::make_random(rhs_cg_context, type, 0, true, false, tt);
+		rhs = Expression::make_random(rhs_cg_context, type, &qfer, true, false, tt);
 		cg_context.merge_param_context(rhs_cg_context, true);
 	}
+	CGOptions::match_exact_qualifiers(prev_flag); // restore flag
 	ERROR_GUARD_AND_DEL2(NULL, fi, lhs);
+
 
 	// typecast, if needed.
 	rhs->check_and_set_cast(&lhs->get_type());
